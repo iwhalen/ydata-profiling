@@ -8,7 +8,7 @@ IBIS_MODULES = [
     # "describe_categorical_ibis",
     "describe_counts_ibis",
     # "describe_date_ibis",
-    # "describe_generic_ibis",
+    "describe_generic_ibis",
     # "describe_numeric_ibis",
     # "describe_supported_ibis",
     # "duplicates_ibis",
@@ -34,7 +34,7 @@ for module_name in IBIS_MODULES:
 
 # Explicitly list all available functions
 __all__: list[str] = [
-    # "describe_generic_ibis",
+    "describe_generic_ibis",
     # "describe_boolean_1d_ibis",
     # "describe_categorical_1d_ibis",
     # "describe_text_1d_ibis",
