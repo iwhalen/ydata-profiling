@@ -10,7 +10,7 @@ IBIS_MODULES = [
     # "describe_date_ibis",
     "describe_generic_ibis",
     # "describe_numeric_ibis",
-    # "describe_supported_ibis",
+    "describe_supported_ibis",
     # "duplicates_ibis",
     # "missing_ibis",
     # "sample_ibis",
