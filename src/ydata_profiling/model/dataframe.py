@@ -7,18 +7,27 @@ from ydata_profiling.model.pandas.dataframe_pandas import pandas_preprocess
 from ydata_profiling.utils.backend import is_ibis_installed, is_pyspark_installed
 
 if not is_pyspark_installed():
-    from typing import TypeVar
 
-    sparkDataFrame = TypeVar("sparkDataFrame")
+    class _sparkDataFrame:
+        """Dummy class that that no object will ever type match."""
+
+        pass
+
+    sparkDataFrame = _sparkDataFrame
+
 else:
     from pyspark.sql import DataFrame as sparkDataFrame  # type: ignore
 
     from ydata_profiling.model.spark.dataframe_spark import spark_preprocess
 
 if not is_ibis_installed():
-    from typing import TypeVar
 
-    ibisDataFrame = TypeVar("ibisDataFrame")
+    class _ibisDataFrame:
+        """Dummy class that that no object will ever type match."""
+
+        pass
+
+    ibisDataFrame = _ibisDataFrame
 else:
     from ibis import Table as ibisDataFrame  # type: ignore
 
