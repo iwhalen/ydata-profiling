@@ -2,7 +2,6 @@
 
 from typing import Tuple
 
-import ibis
 import numpy as np
 from ibis import Table, _
 
