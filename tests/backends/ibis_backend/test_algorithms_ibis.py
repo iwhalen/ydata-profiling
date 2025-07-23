@@ -1,0 +1,89 @@
+import ibis
+import numpy as np
+import pytest
+
+from ydata_profiling.config import Settings
+from ydata_profiling.model.ibis.algorithms_ibis import histogram_compute
+
+test_data = [
+    (
+        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+        "integers_no_nulls",
+    ),
+    (
+        np.array([1, 2, 3, 4, None, 6, 7, 8, None, 10]),
+        "integers_with_nulls",
+    ),
+    (
+        np.array([1.0, 2.5, 3.0, 4.5, 5.0, 6.5, 7.0, 8.5, 9.0, 10.5]),
+        "floats_no_nulls",
+    ),
+    (
+        np.array([1.0, None, 3.0, 4.5, 5.0, 6.5, None, 8.5, 9.0, None]),
+        "floats_nulls",
+    ),
+    (
+        np.array([1.0, np.nan, 3.0, 4.5, 5.0, 6.5, np.nan, 8.5, 9.0, np.nan]),
+        "floats_nans",
+    ),
+    (
+        np.array([1.0, np.inf, 3.0, 4.5, 5.0, 6.5, np.inf, 8.5, 9.0, 10.5]),
+        "floats_inf",
+    ),
+    (
+        np.array([1.0, -np.inf, 3.0, 4.5, 5.0, 6.5, -np.inf, 8.5, 9.0, 10.5]),
+        "floats_neg_inf",
+    ),
+    (
+        np.array(
+            [
+                1.0,
+                2.5,
+                np.inf,
+                4.5,
+                None,
+                -np.inf,
+                np.nan,
+                8.5,
+                0,
+                -10.5,
+                -10.5,
+            ]
+        ),
+        "floats_with_special_values",
+    ),
+    (np.array([0, 0, 0, 0]), "zeros_only"),
+]
+
+
+@pytest.mark.parametrize("bins", [3, 5, 10])
+@pytest.mark.parametrize("data, name", test_data)
+def test_histogram_compute(bins, data, name):
+    config = Settings()
+    config.plot.histogram.bins = bins
+
+    column_name = "test_column"
+    tbl = ibis.memtable({column_name: data})
+
+    ibis_bins, ibis_counts = histogram_compute(
+        config, series=tbl, column_name=column_name
+    )
+
+    if data.dtype == object:
+        # Filter out None values and convert to float
+        clean_data = data[data != np.array(None)].astype(float)
+    else:
+        clean_data = data.astype(float)
+
+    # Filter out NaN and inf values
+    clean_data = clean_data[np.isfinite(clean_data)]
+
+    if len(clean_data) == 0:
+        np_counts, np_bins = np.array([]), np.array([])
+    else:
+        np_counts, np_bins = np.histogram(clean_data, bins=config.plot.histogram.bins)
+
+    assert len(ibis_counts) == len(np_counts)
+    assert len(ibis_bins) == len(np_bins)
+    np.testing.assert_array_equal(ibis_counts, np_counts)
+    np.testing.assert_array_equal(ibis_bins, np_bins)
