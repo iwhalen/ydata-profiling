@@ -17,12 +17,10 @@ def describe_supported_ibis(
     Returns:
         A dict containing calculated series description values.
     """
-
-    # number of non-NaN observations in the Series
     count = summary["count"]
     value_counts = summary["value_counts"]
-    distinct_count = summary["value_counts_without_nan"].count().execute()
 
+    distinct_count = value_counts.drop_null().count().execute()
     unique_count = value_counts.filter(value_counts["count"] == 1).count().execute()
 
     stats = {

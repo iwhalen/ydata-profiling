@@ -6,10 +6,8 @@ import numpy as np
 from ibis import Table, _
 
 from ydata_profiling.config import Settings
-from ydata_profiling.model.summary_algorithms import (
-    describe_numeric_1d,
-    histogram_compute,
-)
+from ydata_profiling.model.ibis.algorithms_ibis import histogram_compute
+from ydata_profiling.model.summary_algorithms import describe_numeric_1d
 
 
 def _kurtosis(t: Table) -> float:
@@ -193,20 +191,10 @@ def describe_numeric_1d_ibis(
 
     summary["cv"] = summary["std"] / summary["mean"] if summary["mean"] else np.nan
 
-    # TODO: enable monotonic check. Similar to Spark, this would need an ordinal column as well.
+    # TODO: enable monotonicity check.
+    # This would need an ordinal column to enforce ordering. Similar to Spark's limitation.
     summary["monotonic"] = 0
 
-    infinity_index = summary["value_counts_without_nan"].index.isin([np.inf, -np.inf])
-
-    # TODO: enable histogram computation.
-    # Again, similar to Spark, we would need some non-trivial work to implement this in Ibis.
-    summary.update(
-        histogram_compute(
-            config,
-            summary["value_counts_without_nan"][~infinity_index].index.values,
-            summary["n_distinct"],
-            weights=summary["value_counts_without_nan"][~infinity_index].values,
-        )
-    )
+    summary.update({"histogram": histogram_compute(config, series)})
 
     return config, series, summary

@@ -33,6 +33,8 @@ def describe_counts_ibis(
     )
 
     n_missing = series[column_name].isnull().sum().execute()
+    if n_missing is None:
+        n_missing = 0
 
     value_counts_no_nan = value_counts.filter(value_counts[column_name].notnull())
 

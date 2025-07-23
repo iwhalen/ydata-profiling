@@ -87,8 +87,9 @@ test_data = [
 
 
 @pytest.mark.parametrize("series, test_id", test_data, ids=[d[1] for d in test_data])
-def test_describe_numeric_ibis_matches_pandas(series, test_id):
+def test_describe_numeric_ibis(series, test_id):
     config = Settings()
+    config.plot.histogram.bins = 3
 
     ibis_table = ibis.memtable(series)
 
@@ -140,3 +141,13 @@ def test_describe_numeric_ibis_matches_pandas(series, test_id):
             ), f'Key "{key}" not approximately equal'
 
     assert summary_ibis["monotonic"] == 0
+
+    hist_ibis = summary_ibis["histogram"]
+    hist_pandas = summary_pandas["histogram"]
+    assert len(hist_ibis) == len(hist_pandas)
+
+    # There is a bug in the Pandas implementation causing an all zero series to have only 1 bucket.
+    # This test is skipped for this case.
+    if not all(series == 0):
+        np.testing.assert_array_equal(hist_ibis[0], hist_pandas[0])
+        np.testing.assert_array_equal(hist_ibis[1], hist_pandas[1])

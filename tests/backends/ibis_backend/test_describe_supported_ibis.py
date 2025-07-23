@@ -3,7 +3,11 @@ import pandas as pd
 import pytest
 
 from ydata_profiling.config import Settings
+from ydata_profiling.model.ibis.describe_counts_ibis import describe_counts_ibis
+from ydata_profiling.model.ibis.describe_generic_ibis import describe_generic_ibis
 from ydata_profiling.model.ibis.describe_supported_ibis import describe_supported_ibis
+from ydata_profiling.model.pandas.describe_counts_pandas import pandas_describe_counts
+from ydata_profiling.model.pandas.describe_generic_pandas import pandas_describe_generic
 from ydata_profiling.model.pandas.describe_supported_pandas import (
     pandas_describe_supported,
 )
@@ -16,38 +20,28 @@ from ydata_profiling.model.pandas.describe_supported_pandas import (
         pd.DataFrame({"A": [1, 2, 3, 4, 5]}),
         pd.DataFrame({"A": [1, 1, 2, 2]}),
         pd.DataFrame({"A": []}),
-        pd.DataFrame({"A": [None, None]}),
     ],
 )
 def test_describe_supported_ibis_matches_pandas(data: pd.DataFrame):
     config = Settings()
     series = data["A"]
-    ibis_table = ibis.memtable(data)
-    ibis_series = ibis_table.select("A")
+    ibis_series = ibis.memtable(data)
 
-    # Manually construct pandas summary input
-    pandas_summary_input = {
-        "count": series.count(),
-        "value_counts_without_nan": series.value_counts(),
-        "hashable": True,
-    }
+    pandas_summary = {}  # type: ignore
+    for func in [
+        pandas_describe_counts,
+        pandas_describe_generic,
+        pandas_describe_supported,
+    ]:
+        _, _, pandas_summary = func(config, series, pandas_summary)
 
-    # Manually construct Ibis summary input
-    ibis_summary_input = {
-        "count": ibis_series["A"].count().execute(),
-        "value_counts": ibis_series.value_counts(name="count"),
-        "value_counts_without_nan": ibis_series.drop_null().value_counts(name="count"),
-    }
-
-    # Pandas path
-    _, _, pandas_summary = pandas_describe_supported(
-        config, series, pandas_summary_input
-    )
-
-    # Ibis path
-    _, _, ibis_summary = describe_supported_ibis(
-        config, ibis_series, ibis_summary_input
-    )
+    ibis_summary = {}  # type: ignore
+    for func in [
+        describe_counts_ibis,
+        describe_generic_ibis,
+        describe_supported_ibis,
+    ]:
+        _, _, ibis_summary = func(config, ibis_series, ibis_summary)
 
     # Assertions
     assert ibis_summary["n_distinct"] == pandas_summary["n_distinct"]

@@ -53,6 +53,30 @@ test_data = [
         "floats_with_special_values",
     ),
     (np.array([0, 0, 0, 0]), "zeros_only"),
+    (
+        np.array(
+            [
+                -0.20547697,
+                -2.08429223,
+                -0.47450728,
+                -1.06711806,
+                -0.71782538,
+                1.41754944,
+                -1.54147593,
+                -0.41826313,
+                0.72911836,
+                -0.973183,
+                -0.27042909,
+                -1.67609364,
+                2.0821515,
+                0.67926723,
+                0.58568235,
+                0.5415536,
+                -0.72058637,
+            ]
+        ),
+        "random_floats",
+    ),
 ]
 
 
@@ -65,7 +89,7 @@ def test_histogram_compute(bins, data, name):
     column_name = "test_column"
     tbl = ibis.memtable({column_name: data})
 
-    ibis_bins, ibis_counts = histogram_compute(
+    ibis_counts, ibis_bins = histogram_compute(
         config, series=tbl, column_name=column_name
     )
 
