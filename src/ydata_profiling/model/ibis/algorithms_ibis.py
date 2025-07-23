@@ -78,4 +78,4 @@ def histogram_compute(
         else:
             hist_counts[bucket] += count
 
-    return bin_edges, hist_counts
+    return hist_counts, bin_edges
