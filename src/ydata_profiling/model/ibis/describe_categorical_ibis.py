@@ -1,51 +1,39 @@
 """Describe a categorical column."""
 
+from typing import Tuple
+
 import numpy as np
 from ibis import Table, _
 
+from ydata_profiling.config import Settings
+from ydata_profiling.model.ibis.algorithms_ibis import entropy
+from ydata_profiling.model.ibis.describe_text_ibis import describe_text_1d_ibis
+from ydata_profiling.model.summary_algorithms import describe_categorical_1d
 
-def length_summary(series: Table) -> dict:
-    """Describe the length of a categorical column.
+
+@describe_categorical_1d.register
+def describe_categorical_1d_ibis(
+    config: Settings, series: Table, summary: dict
+) -> Tuple[Settings, Table, dict]:
+    """
+    Describe a categorical column.
 
     Args:
+        config: The configuration object.
         series: The Ibis table to describe. Expected to be a single column.
+        summarizer: The summarizer object.
 
     Returns:
-        A dict containing the length statistics.
+        A dict containing the description of the categorical column.
     """
-    column_name = series.columns[0]
+    config, series, summary = describe_text_1d_ibis(config, series, summary)
 
-    n = series.count().execute()
-
-    if n == 0:
-        return {
-            "max_length": np.nan,
-            "mean_length": np.nan,
-            "median_length": np.nan,
-            "min_length": np.nan,
-        }
-
-    return (
-        series.mutate(length=series[column_name].length())
-        .aggregate(
-            max_length=_.length.max(),
-            mean_length=_.length.mean(),
-            median_length=_.length.median(),
-            min_length=_.length.min(),
-        )
-        .execute()
-        .to_dict("records")[0]
+    value_counts = summary["value_counts"].drop_null()
+    n_classes = value_counts.count().execute()
+    summary["imbalance"] = (
+        1 - (entropy(value_counts, "count", base=2) / np.log2(n_classes))
+        if n_classes > 1
+        else 0
     )
 
-
-def unicode_summary(series: Table) -> dict:
-    """Describe the character-level statistics of a text column.
-
-    Args:
-        series: The Ibis table to describe. Expected to be a single column.
-
-    Returns:
-        A dict containing the character-level statistics.
-    """
-
-    return {}
+    return config, series, summary

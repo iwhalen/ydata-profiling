@@ -4,8 +4,7 @@ import numpy as np
 from ibis import Table
 
 from ydata_profiling.config import Settings
-from ydata_profiling.model.ibis.algorithms_ibis import histogram_compute
-from ydata_profiling.model.ibis.describe_categorical_ibis import length_summary
+from ydata_profiling.model.ibis.algorithms_ibis import histogram_compute, length_summary
 
 
 def describe_text_1d_ibis(
@@ -27,7 +26,8 @@ def describe_text_1d_ibis(
 
     clean = series.dropna()
 
-    summary.update({"first_rows": clean.limit(5).select(column_name).execute()})
+    if not config.vars.cat.redact:
+        summary.update({"first_rows": clean.limit(5).select(column_name).execute()})
 
     if config.vars.text.length:
         summary.update(**length_summary(clean))

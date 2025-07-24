@@ -64,7 +64,7 @@ def test_raises_not_implemented_error():
         pytest.param(["", "", ""], id="three_empty_str"),
     ],
 )
-def test_length_summary(text):
+def test_describe_text_1d_ibis(text):
     """Test that the length summary is correct."""
     series = pd.Series(text, dtype=str)
     table = ibis.memtable({"text": series}, schema={"text": String()})
