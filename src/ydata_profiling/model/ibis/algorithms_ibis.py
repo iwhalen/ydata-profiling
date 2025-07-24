@@ -1,5 +1,6 @@
 from typing import Optional, Tuple
 
+import ibis
 import numpy as np
 from ibis import Table, _
 
@@ -79,3 +80,84 @@ def histogram_compute(
             hist_counts[bucket] += count
 
     return hist_counts, bin_edges
+
+
+def length_summary(series: Table) -> dict:
+    """Describe the length of a categorical column.
+
+    Args:
+        series: The Ibis table to describe. Expected to be a single column.
+
+    Returns:
+        A dict containing the length statistics.
+    """
+    column_name = series.columns[0]
+
+    n = series.count().execute()
+
+    if n == 0:
+        return {
+            "max_length": np.nan,
+            "mean_length": np.nan,
+            "median_length": np.nan,
+            "min_length": np.nan,
+        }
+
+    return (
+        series.mutate(length=series[column_name].length())
+        .aggregate(
+            max_length=_.length.max(),
+            mean_length=_.length.mean(),
+            median_length=_.length.median(),
+            min_length=_.length.min(),
+        )
+        .execute()
+        .to_dict("records")[0]
+    )
+
+
+def entropy(table: Table, column_name: str, base: int = None) -> float:
+    """Calculate the entropy of a column.
+
+    Note:
+        Follows the scipy.stats.entropy naming convention and behavior.
+
+    Args:
+        table: The Ibis table to calculate the entropy of.
+        column_name: The name of the column to calculate the entropy of.
+        base: The logarithmic base to use. If None, will use the natural logarithm.
+
+    Returns:
+        The entropy of the column.
+    """
+    # Most backends will ignore nans in the calculations, so we need to handle them here.
+    if (
+        hasattr(table[column_name], "isnan")
+        and table.aggregate(
+            null_or_nan=(table[column_name].isnan() | table[column_name].isnull()).any()
+        )
+        .execute()
+        .iloc[0]
+        .item()
+    ):
+        s = np.nan
+
+    else:
+        s = (
+            table.mutate(pk=table[column_name] / table[column_name].sum())
+            .mutate(
+                summand=ibis.cases(
+                    (_["pk"] > 0.0, -_["pk"] * _["pk"].log()),
+                    (_["pk"] == 0.0, 0.0),
+                    else_=float("-inf"),
+                )
+            )
+            .aggregate(s=_["summand"].sum())
+            .execute()
+            .to_dict("records")[0]["s"]
+        )
+
+        if base is not None:
+            s = (s / np.log(base)).item()
+
+    return s

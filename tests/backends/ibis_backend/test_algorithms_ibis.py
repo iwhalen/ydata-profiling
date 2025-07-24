@@ -1,9 +1,10 @@
 import ibis
 import numpy as np
 import pytest
+from scipy.stats import entropy as scipy_entropy
 
 from ydata_profiling.config import Settings
-from ydata_profiling.model.ibis.algorithms_ibis import histogram_compute
+from ydata_profiling.model.ibis.algorithms_ibis import entropy, histogram_compute
 
 test_data = [
     (
@@ -111,3 +112,22 @@ def test_histogram_compute(bins, data, name):
     assert len(ibis_bins) == len(np_bins)
     np.testing.assert_array_equal(ibis_counts, np_counts)
     np.testing.assert_array_equal(ibis_bins, np_bins)
+
+
+@pytest.mark.parametrize("base", [2, 10, None])
+@pytest.mark.parametrize("data, name", test_data)
+def test_entropy(base, data, name):
+    # Scipy doesn't handle None, so we don't either.
+    data = data[data != None]
+
+    tbl = ibis.memtable({"data": data})
+
+    actual = entropy(tbl, "data", base=base)
+    # Scipy can't handle integers, so we cast to float.
+    expected = scipy_entropy(data.astype(float), base=base)
+
+    if np.isnan(expected):
+        assert np.isnan(actual), f"Expected value is nan, actual is {actual}"
+
+    else:
+        assert actual == pytest.approx(expected)
