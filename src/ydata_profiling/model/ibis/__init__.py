@@ -4,7 +4,7 @@ import importlib
 IBIS_MODULES = [
     "correlations_ibis",
     "dataframe_ibis",
-    # "describe_boolean_ibis",
+    "describe_boolean_ibis",
     "describe_categorical_ibis",
     "describe_counts_ibis",
     "describe_date_ibis",
@@ -35,8 +35,8 @@ for module_name in IBIS_MODULES:
 # Explicitly list all available functions
 __all__: list[str] = [
     "describe_generic_ibis",
-    # "describe_boolean_1d_ibis",
-    # "describe_categorical_1d_ibis",
+    "describe_boolean_1d_ibis",
+    "describe_categorical_1d_ibis",
     "describe_text_1d_ibis",
     "describe_numeric_1d_ibis",
     "describe_date_1d_ibis",
