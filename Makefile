@@ -13,6 +13,10 @@ test_spark:
 	pytest tests/backends/spark_backend/
 	ydata_profiling -h
 
+test_ibis:
+	pytest tests/backends/ibis_backend/
+	ydata_profiling -h
+
 test_cov:
 	pytest --cov=. tests/unit/
 	pytest --cov=. --cov-append tests/issues/

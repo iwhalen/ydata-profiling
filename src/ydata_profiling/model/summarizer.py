@@ -34,7 +34,7 @@ from ydata_profiling.model.summary_algorithms import (  # Check what is this met
     describe_timeseries_1d,
     describe_url_1d,
 )
-from ydata_profiling.utils.backend import is_pyspark_installed
+from ydata_profiling.utils.backend import is_ibis_installed, is_pyspark_installed
 
 
 class BaseSummarizer(Handler):
@@ -54,8 +54,13 @@ class BaseSummarizer(Handler):
 class ProfilingSummarizer(BaseSummarizer):
     """A summarizer for Pandas DataFrames."""
 
-    def __init__(self, typeset: VisionsTypeset, use_spark: bool = False):
+    def __init__(
+        self, typeset: VisionsTypeset, use_spark: bool = False, use_ibis: bool = False
+    ):
+        if use_spark and use_ibis:
+            raise ValueError("Cannot use both Spark and Ibis summarizers")
         self.use_spark = use_spark and is_pyspark_installed()
+        self.use_ibis = use_ibis and is_ibis_installed()
         self._summary_map = self._create_summary_map()
         super().__init__(self._summary_map, typeset)
 
@@ -65,7 +70,7 @@ class ProfilingSummarizer(BaseSummarizer):
         return self._summary_map
 
     def _create_summary_map(self) -> Dict[str, List[Callable]]:
-        """Creates the summary map for Pandas summarization."""
+        """Creates the summary map summarization with appropriate backend."""
         if self.use_spark:
             from ydata_profiling.model.spark import (
                 describe_boolean_1d_spark,
@@ -95,6 +100,36 @@ class ProfilingSummarizer(BaseSummarizer):
                 "Image": [describe_image_1d],
                 "TimeSeries": [describe_timeseries_1d],
             }
+        elif self.use_ibis:
+            from ydata_profiling.model.ibis import (
+                describe_boolean_1d_ibis,
+                describe_categorical_1d_ibis,
+                describe_counts_ibis,
+                describe_date_1d_ibis,
+                describe_generic_ibis,
+                describe_numeric_1d_ibis,
+                describe_supported_ibis,
+                describe_text_1d_ibis,
+            )
+
+            summary_map = {
+                "Unsupported": [
+                    describe_counts_ibis,
+                    describe_generic_ibis,
+                    describe_supported_ibis,
+                ],
+                "Numeric": [describe_numeric_1d_ibis],
+                "DateTime": [describe_date_1d_ibis],
+                "Text": [describe_text_1d_ibis],
+                "Categorical": [describe_categorical_1d_ibis],
+                "Boolean": [describe_boolean_1d_ibis],
+                "URL": [describe_url_1d],
+                "Path": [describe_path_1d],
+                "File": [describe_file_1d],
+                "Image": [describe_image_1d],
+                "TimeSeries": [describe_timeseries_1d],
+            }
+
         else:
             summary_map = {
                 "Unsupported": [

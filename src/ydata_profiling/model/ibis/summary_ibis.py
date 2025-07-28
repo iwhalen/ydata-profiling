@@ -2,7 +2,6 @@
 
 from typing import Tuple
 
-import pandas as pd
 from ibis import Table
 from tqdm import tqdm
 from visions import VisionsTypeset
@@ -14,7 +13,7 @@ from ydata_profiling.utils.dataframe import sort_column_names
 NUMERIC_TYPES = ()
 
 
-def _get_type(series: Table):
+def _get_type(series: Table) -> str:
     """Get the type of a series."""
     dtype = series.schema()[series.columns[0]]
 
@@ -57,7 +56,7 @@ def ibis_describe_1d(
             "infer_dtypes is not supported for Ibis Tables. Please set infer_dtypes to False."
         )
 
-    return summarizer.summarize(config, series, dtype=_get_type(series))
+    return summarizer.summarize(config, series, dtype=_get_type(series))  # type: ignore
 
 
 def get_series_descriptions_ibis(

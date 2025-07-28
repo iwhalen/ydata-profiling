@@ -1,6 +1,7 @@
 """Missing values plotting functionality for Ibis backend."""
 
 import numpy as np
+import pandas as pd
 from ibis import Column, Table
 
 from ydata_profiling.config import Settings
@@ -72,9 +73,10 @@ def missing_heatmap(config: Settings, df: Table) -> str:
 
     heatmap_columns = null_counts[(null_counts > 0) & (null_counts < n)].index.to_list()
 
-    correlation_matrix = pearson_compute(
+    correlation_matrix: pd.DataFrame = pearson_compute(
         config, null_matrix, {c: {"type": "Numeric"} for c in heatmap_columns}
-    ).values
+    )
+    correlation_matrix = correlation_matrix.values
 
     mask = np.zeros_like(correlation_matrix)
     mask[np.triu_indices_from(mask)] = True

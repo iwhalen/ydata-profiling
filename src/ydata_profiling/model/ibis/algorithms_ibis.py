@@ -36,7 +36,7 @@ def histogram_compute(
             f"provided for Ibis. Got {bins}."
         )
 
-    clean = series.dropna()
+    clean = series.drop_null()
     if hasattr(clean[column_name], "isinf"):
         clean = clean.filter(~_[column_name].isinf())
 
@@ -161,3 +161,21 @@ def entropy(table: Table, column_name: str, base: int = None) -> float:
             s = (s / np.log(base)).item()
 
     return s
+
+
+def column_imbalance_score(table: Table, column_name: str) -> float:
+    """Calculate the imbalance score for a column.
+
+    Args:
+        table: The Ibis table containing the value counts.
+        column_name: The name of the column to calculate the imbalance score for.
+
+    Returns:
+        The imbalance score for the column.
+    """
+    n_classes = table.count().execute()
+    return (
+        1 - (entropy(table, "count", base=2) / np.log2(n_classes))
+        if n_classes > 1
+        else 0
+    )

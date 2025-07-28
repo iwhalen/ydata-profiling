@@ -1,6 +1,5 @@
 from typing import Tuple
 
-import numpy as np
 from ibis import Table
 
 from ydata_profiling.config import Settings
@@ -24,7 +23,7 @@ def describe_text_1d_ibis(
     """
     column_name = series.columns[0]
 
-    clean = series.dropna()
+    clean = series.drop_null()
 
     if not config.vars.cat.redact:
         summary.update({"first_rows": clean.limit(5).select(column_name).execute()})
