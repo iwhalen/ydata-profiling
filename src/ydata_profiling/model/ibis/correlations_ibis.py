@@ -26,13 +26,14 @@ def pearson_compute(
 
         matrix = np.empty([len(num_cols), len(num_cols)], dtype=float)
 
+        # TODO: Likely a way to speed this up by writing everything in a single query.
         for i, col1 in enumerate(num_cols):
             for j, col2 in enumerate(num_cols):
                 if i <= j:
                     corr_value = (
                         numeric_table[col1]
-                        .corr(numeric_table[col2], how="pop")
-                        .execute()
+                        # TODO: Implement with raw math operations for maximal Ibis backend compatibility.
+                        .corr(numeric_table[col2], how="pop").execute()
                     )
                     matrix[i, j] = corr_value
                     matrix[j, i] = corr_value
