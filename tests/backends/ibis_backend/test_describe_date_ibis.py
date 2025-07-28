@@ -3,22 +3,14 @@
 from datetime import datetime
 
 import ibis
-import numpy as np
 import pandas as pd
 import pytest
-from pytest import approx
 
 from ydata_profiling.config import Settings
 from ydata_profiling.model.ibis.describe_counts_ibis import describe_counts_ibis
 from ydata_profiling.model.ibis.describe_date_ibis import describe_date_1d_ibis
 from ydata_profiling.model.ibis.describe_generic_ibis import describe_generic_ibis
 from ydata_profiling.model.ibis.describe_supported_ibis import describe_supported_ibis
-from ydata_profiling.model.pandas.describe_counts_pandas import pandas_describe_counts
-from ydata_profiling.model.pandas.describe_date_pandas import pandas_describe_date_1d
-from ydata_profiling.model.pandas.describe_generic_pandas import pandas_describe_generic
-from ydata_profiling.model.pandas.describe_supported_pandas import (
-    pandas_describe_supported,
-)
 
 test_data = [
     (

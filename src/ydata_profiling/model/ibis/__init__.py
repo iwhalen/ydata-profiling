@@ -12,12 +12,12 @@ IBIS_MODULES = [
     "describe_numeric_ibis",
     "describe_supported_ibis",
     "describe_text_ibis",
-    # "duplicates_ibis",
-    # "missing_ibis",
-    # "sample_ibis",
-    # "summary_ibis",
-    # "table_ibis",
-    # "timeseries_index_ibis",
+    "duplicates_ibis",
+    "missing_ibis",
+    "sample_ibis",
+    "summary_ibis",
+    "table_ibis",
+    "timeseries_index_ibis",
 ]
 
 
@@ -41,9 +41,9 @@ __all__: list[str] = [
     "describe_numeric_1d_ibis",
     "describe_date_1d_ibis",
     "describe_counts_ibis",
-    # "get_duplicates_ibis",
-    # "get_sample_ibis",
-    # "get_table_stats_ibis",
-    # "get_time_index_description_ibis",
-    # "get_series_descriptions_ibis",
+    "get_duplicates_ibis",
+    "get_sample_ibis",
+    "get_table_stats_ibis",
+    "get_time_index_description_ibis",
+    "get_series_descriptions_ibis",
 ]

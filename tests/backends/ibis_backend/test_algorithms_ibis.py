@@ -118,7 +118,7 @@ def test_histogram_compute(bins, data, name):
 @pytest.mark.parametrize("data, name", test_data)
 def test_entropy(base, data, name):
     # Scipy doesn't handle None, so we don't either.
-    data = data[data != None]
+    data = data[data != None]  # noqa: E711
 
     tbl = ibis.memtable({"data": data})
 

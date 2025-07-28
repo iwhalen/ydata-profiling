@@ -45,6 +45,7 @@ def test_ibis_get_sample_warnings(data):
     config.samples.random = 1
     config.samples.tail = 1
 
-    with pytest.warns(UserWarning, match="tail sample not implemented for Ibis"):
-        with pytest.warns(UserWarning, match="random sample not implemented for Ibis"):
-            get_sample_ibis(config, data)
+    with pytest.warns(
+        UserWarning, match="tail sample not implemented for Ibis"
+    ), pytest.warns(UserWarning, match="random sample not implemented for Ibis"):
+        get_sample_ibis(config, data)
