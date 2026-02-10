@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, Optional, Sized
 import pandas as pd
 
 from ydata_profiling.config import Settings
+from ydata_profiling.model.dataframe import ibisDataFrame, sparkDataFrame
 
 
 class MissingDataBackend:
@@ -14,8 +15,14 @@ class MissingDataBackend:
         """Determine backend once and store it for all missing-data computations."""
         if isinstance(df, pd.DataFrame):
             self.backend_module = "ydata_profiling.model.pandas.missing_pandas"
-        else:
+        elif isinstance(df, sparkDataFrame):
             self.backend_module = "ydata_profiling.model.spark.missing_spark"
+        elif isinstance(df, ibisDataFrame):
+            self.backend_module = "ydata_profiling.model.ibis.missing_ibis"
+        else:
+            raise NotImplementedError(
+                f"Missing data backend not implemented for {type(df)}"
+            )
 
         self.module = importlib.import_module(self.backend_module)
 

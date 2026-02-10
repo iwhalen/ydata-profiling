@@ -100,6 +100,10 @@ docs = [
     "mkdocs-badges",
 ]
 
+ibis = [
+    "ibis-framework>=10.0.0,<11.0.0"
+]
+
 notebook = [
     "jupyter>=1.0.0",
     "ipywidgets>=7.5.1",
@@ -125,6 +129,7 @@ test = [
     "pyarrow",
     "twine>=3.1.1",
     "kaggle",
+    "ibis-framework[duckdb]>=10.0.0,<11.0.0",
 ]
 
 unicode= [

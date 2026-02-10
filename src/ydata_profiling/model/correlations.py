@@ -15,9 +15,11 @@ try:
 except ImportError:
     from pandas.errors import DataError
 
+from ydata_profiling.model.dataframe import ibisDataFrame, sparkDataFrame
+
 
 class CorrelationBackend:
-    """Helper class to select and cache the appropriate correlation backend (Pandas or Spark)."""
+    """Helper class to select and cache the appropriate correlation backend (Pandas, Spark, or Ibis)."""
 
     @no_type_check
     def __init__(self, df: Sized):
@@ -26,10 +28,16 @@ class CorrelationBackend:
             from ydata_profiling.model.pandas import (
                 correlations_pandas as correlation_backend,  # type: ignore
             )
-        else:
+        elif isinstance(df, sparkDataFrame):
             from ydata_profiling.model.spark import (
                 correlations_spark as correlation_backend,  # type: ignore
             )
+        elif isinstance(df, ibisDataFrame):
+            from ydata_profiling.model.ibis import (
+                correlations_ibis as correlation_backend,  # type: ignore
+            )
+        else:
+            raise NotImplementedError(f"Unsupported DataFrame type {type(df)}")
 
         self.backend = correlation_backend
 

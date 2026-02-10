@@ -4,18 +4,9 @@ import warnings
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from ydata_profiling.utils.backend import is_pyspark_installed
-
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import pkg_resources
-
-if not is_pyspark_installed():
-    from typing import TypeVar
-
-    sDataFrame = TypeVar("sDataFrame")
-else:
-    from pyspark.sql import DataFrame as sDataFrame  # type: ignore
 
 from dataclasses import asdict, is_dataclass
 
@@ -25,10 +16,11 @@ from tqdm.auto import tqdm
 from typeguard import typechecked
 from visions import VisionsTypeset
 
-from ydata_profiling.config import Config, Settings, SparkSettings
+from ydata_profiling.config import Config, IbisSettings, Settings, SparkSettings
 from ydata_profiling.expectations_report import ExpectationsReport
 from ydata_profiling.model import BaseDescription
 from ydata_profiling.model.alerts import AlertType
+from ydata_profiling.model.dataframe import ibisDataFrame, sparkDataFrame
 from ydata_profiling.model.describe import describe as describe_df
 from ydata_profiling.model.sample import Sample
 from ydata_profiling.model.summarizer import (
@@ -67,7 +59,7 @@ class ProfileReport(SerializeReport, ExpectationsReport):
 
     def __init__(
         self,
-        df: Optional[Union[pd.DataFrame, sDataFrame]] = None,
+        df: Optional[Union[pd.DataFrame, sparkDataFrame, ibisDataFrame]] = None,
         minimal: bool = False,
         tsmode: bool = False,
         sortby: Optional[str] = None,
@@ -120,8 +112,12 @@ class ProfileReport(SerializeReport, ExpectationsReport):
         else:
             if isinstance(df, pd.DataFrame):
                 report_config = Settings()
-            else:
+            elif isinstance(df, ibisDataFrame):
+                report_config = IbisSettings()
+            elif isinstance(df, sparkDataFrame):
                 report_config = SparkSettings()
+            else:
+                raise NotImplementedError(f"Unsupported dataframe type: {type(df)}")
 
         groups = [
             (explorative, "explorative"),
@@ -148,7 +144,7 @@ class ProfileReport(SerializeReport, ExpectationsReport):
         if tsmode and sortby:
             report_config.vars.timeseries.sortby = sortby
 
-        self.df = self.__initialize_dataframe(df, report_config)
+        self.df = self.__initialize_dataframe(df, report_config)  # type: ignore
         self.config = report_config
         self._df_hash = None
         self._sample = sample
@@ -162,7 +158,7 @@ class ProfileReport(SerializeReport, ExpectationsReport):
 
     @staticmethod
     def __validate_inputs(
-        df: Optional[Union[pd.DataFrame, sDataFrame]],
+        df: Optional[Union[pd.DataFrame, sparkDataFrame, ibisDataFrame]],
         minimal: bool,
         tsmode: bool,
         config_file: Optional[Union[Path, str]],
@@ -177,13 +173,12 @@ class ProfileReport(SerializeReport, ExpectationsReport):
                 "Arguments `config_file` and `minimal` are mutually exclusive."
             )
 
-        # Spark Dataframe validations
         if isinstance(df, pd.DataFrame):
             if df is not None and df.empty:
                 raise ValueError(
                     "DataFrame is empty. Please" "provide a non-empty DataFrame."
                 )
-        else:
+        elif isinstance(df, sparkDataFrame):
             if tsmode:
                 raise NotImplementedError(
                     "Time-Series dataset analysis is not yet supported for Spark DataFrames"
@@ -193,13 +188,24 @@ class ProfileReport(SerializeReport, ExpectationsReport):
                 df is not None and df.rdd.isEmpty()  # type: ignore
             ):  # df.isEmpty is only support by 3.3.0 pyspark version
                 raise ValueError(
-                    "DataFrame is empty. Please" "provide a non-empty DataFrame."
+                    "DataFrame is empty. Please provide a non-empty DataFrame."
                 )
+        elif isinstance(df, ibisDataFrame):
+            if tsmode:
+                raise NotImplementedError(
+                    "Time-Series dataset analysis is not yet supported for Ibis Tables"
+                )
+
+            if df is not None and df.count().execute() == 0:  # type: ignore
+                raise ValueError("Table is empty. Please provide a non-empty Table.")
+        else:
+            raise NotImplementedError(f"Unsupported dataframe type: {type(df)}")
 
     @staticmethod
     def __initialize_dataframe(
-        df: Optional[Union[pd.DataFrame, sDataFrame]], report_config: Settings
-    ) -> Optional[Union[pd.DataFrame, sDataFrame]]:
+        df: Optional[Union[pd.DataFrame, sparkDataFrame, ibisDataFrame]],
+        report_config: Settings,
+    ) -> Optional[Union[pd.DataFrame, sparkDataFrame, ibisDataFrame]]:
 
         logger.info_def_report(
             df=df,
@@ -258,10 +264,16 @@ class ProfileReport(SerializeReport, ExpectationsReport):
     def summarizer(self) -> BaseSummarizer:
         if self._summarizer is None:
             use_spark = False
-            if self._df_type is not pd.DataFrame:
+            if self._df_type is sparkDataFrame:
                 use_spark = True
 
-            self._summarizer = ProfilingSummarizer(self.typeset, use_spark=use_spark)
+            use_ibis = False
+            if self._df_type is ibisDataFrame:
+                use_ibis = True
+
+            self._summarizer = ProfilingSummarizer(
+                self.typeset, use_spark=use_spark, use_ibis=use_ibis
+            )
         return self._summarizer
 
     @property

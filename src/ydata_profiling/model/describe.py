@@ -1,4 +1,5 @@
 """Organize the calculation of statistics for each series in this DataFrame."""
+
 from datetime import datetime
 from typing import Any, Dict, Optional, Union
 
@@ -13,7 +14,7 @@ from ydata_profiling.model.correlations import (
     calculate_correlation,
     get_active_correlations,
 )
-from ydata_profiling.model.dataframe import preprocess
+from ydata_profiling.model.dataframe import ibisDataFrame, preprocess, sparkDataFrame
 from ydata_profiling.model.description import TimeIndexAnalysis
 from ydata_profiling.model.duplicates import get_duplicates
 from ydata_profiling.model.missing import get_missing_active, get_missing_diagram
@@ -29,7 +30,7 @@ from ydata_profiling.version import __version__
 
 def describe(
     config: Settings,
-    df: Union[pd.DataFrame, "pyspark.sql.DataFrame"],  # type: ignore[name-defined] # noqa: F821
+    df: Union[pd.DataFrame, sparkDataFrame, ibisDataFrame],  # type: ignore[name-defined] # noqa: F821
     summarizer: BaseSummarizer,
     typeset: VisionsTypeset,
     sample: Optional[dict] = None,
@@ -57,20 +58,13 @@ def describe(
         raise TypeError(f"`config` must be of type `Settings`, got {type(config)}")
 
     # Validate df input type
-
-    if not isinstance(df, pd.DataFrame):
-        try:
-            from pyspark.sql import DataFrame as SparkDataFrame  # type: ignore
-
-            if not isinstance(df, SparkDataFrame):  # noqa: TC301
-                raise TypeError(  # noqa: TC301
-                    f"`df` must be either a `pandas.DataFrame` or a `pyspark.sql.DataFrame`, but got {type(df)}."
-                )
-        except ImportError as ex:
-            raise TypeError(
-                f"`df must be either a `pandas.DataFrame` or a `pyspark.sql.DataFrame`, but got {type(df)}."
-                f"If using Spark, make sure PySpark is installed."
-            ) from ex
+    if all(
+        not isinstance(df, t) for t in (pd.DataFrame, sparkDataFrame, ibisDataFrame)
+    ):
+        raise TypeError(
+            f"`df` must either be a `pandas.DataFrame`, `pyspark.sql.DataFrame`, or `ibis.expr.types.relations.Table`, but got {type(df)}. "
+            "If using Ibis or PySpark, make sure it is installed properly."
+        )
 
     df = preprocess(config, df)
 

@@ -1,4 +1,5 @@
 """Configuration for the package."""
+
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -402,6 +403,40 @@ class SparkSettings(Settings):
         "dendrogram": False,
         "heatmap": False,
     }
+    samples: Samples = Samples()
+    samples.tail = 0
+    samples.random = 0
+
+
+class IbisSettings(Settings):
+    """
+    Setting class with the standard report configuration for Ibis Tables.
+    All the supported analysis are set to true.
+    """
+
+    vars: Univariate = Univariate()
+
+    vars.num.low_categorical_threshold = 0
+    vars.text.characters = False
+    vars.text.words = False
+
+    infer_dtypes: bool = False
+
+    correlations: Dict[str, Correlation] = {
+        "pearson": Correlation(key="pearson", calculate=True),
+    }
+
+    correlation_table: bool = True
+
+    interactions: Interactions = Interactions()
+    interactions.continuous = False
+
+    missing_diagrams: Dict[str, bool] = {
+        "bar": True,
+        "matrix": False,
+        "heatmap": True,
+    }
+
     samples: Samples = Samples()
     samples.tail = 0
     samples.random = 0
